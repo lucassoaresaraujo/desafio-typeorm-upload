@@ -1,6 +1,6 @@
 enum TypeTransaction {
-  income = 1,
-  outcome = 2,
+  income = 'income',
+  outcome = 'outcome',
 }
 
 export default TypeTransaction;

@@ -5,6 +5,7 @@
   "username": "postgres",
   "password": "pgsql",
   "database": "desafio-transaction",
+  "logging": false,
   "entities": ["./src/models/*.ts"],
   "migrations": ["./src/database/migrations/*.ts"],
   "cli": {

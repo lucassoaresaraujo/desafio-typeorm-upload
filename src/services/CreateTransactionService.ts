@@ -1,11 +1,11 @@
 // import AppError from '../errors/AppError';
-
 import { getCustomRepository, getRepository } from 'typeorm';
 import Transaction from '../models/Transaction';
 import TypeTransaction from '../models/TypeTransaction';
 
 import TransactionsRepository from '../repositories/TransactionsRepository';
 import Category from '../models/Category';
+import AppError from '../errors/AppError';
 
 interface Request {
   title: string;
@@ -21,21 +21,28 @@ class CreateTransactionService {
     type,
     category,
   }: Request): Promise<Transaction> {
-    const transactionRepository = getCustomRepository(TransactionsRepository);
+    const transactionsRepository = getCustomRepository(TransactionsRepository);
     const categoryRepository = getRepository(Category);
 
-    const transaction = await transactionRepository.create({
+    const { total } = await transactionsRepository.getBalance();
+    const transactionValueGreaterTotal = value > total;
+
+    if (type === TypeTransaction.outcome && transactionValueGreaterTotal) {
+      throw new AppError('Transaction amount greater than the total');
+    }
+
+    const transaction = transactionsRepository.create({
       title,
       value,
       type,
     });
 
     let transactionCategory = await categoryRepository.findOne({
-      where: { title },
+      where: { title: category },
     });
 
     if (!transactionCategory) {
-      transactionCategory = await categoryRepository.create({
+      transactionCategory = categoryRepository.create({
         title: category,
       });
       await categoryRepository.save(transactionCategory);
@@ -43,7 +50,7 @@ class CreateTransactionService {
 
     transaction.category_id = transactionCategory.id;
 
-    return transactionRepository.save(transaction);
+    return transactionsRepository.save(transaction);
   }
 }
 
